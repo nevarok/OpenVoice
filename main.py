@@ -42,6 +42,7 @@ save_bytes_to_file(buffer=buffer, file_path=source_se_checkpoint_path)
 source_se_checkpoint = load_model_from_bytes(load_bytes_from_file(source_se_checkpoint_path))
 
 reference_speaker = 'resources/demo_speaker2.mp3'
+#se spectral envelope
 target_se, audio_name = se_extractor.get_se(reference_speaker, tone_color_converter, target_dir='processed', vad=True)
 
 # target_se can be cached or pickled

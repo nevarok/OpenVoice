@@ -1,4 +1,6 @@
 import io
+import os
+
 import torch
 
 
@@ -11,6 +13,7 @@ def convert_to_bytes(model_path):
 
 
 def save_bytes_to_file(file_path, buffer):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'wb') as file:
         buffer.seek(0)
         file.write(buffer.read())
