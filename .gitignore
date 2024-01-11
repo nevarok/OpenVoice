@@ -6,3 +6,4 @@ checkpoints
 trash
 examples*
 .env
+*.bin
