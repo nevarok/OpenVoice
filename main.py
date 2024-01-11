@@ -1,8 +1,6 @@
 import os
-import torch
 import se_extractor
 from api import BaseSpeakerTTS, ToneColorConverter
-from espeak import text_to_speech_wav
 from json_config import load_json_data, get_hparams_from_json
 from model_converter import convert_to_bytes, save_bytes_to_file, load_bytes_from_file, load_model_from_bytes
 
