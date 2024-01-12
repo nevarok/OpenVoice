@@ -4,8 +4,11 @@ import os
 import torch
 
 
-def convert_to_bytes(model_path):
-    model = torch.load(model_path, map_location=torch.device("cpu"))
+def load_model(model_path):
+    return torch.load(model_path, map_location=torch.device("cpu"))
+
+
+def convert_to_bytes(model):
     buffer = io.BytesIO()
     torch.save(model, buffer)
 
@@ -28,7 +31,6 @@ def load_bytes_from_file(file_path):
 
 def load_model_from_bytes(buffer):
     return torch.load(buffer, map_location=torch.device("cpu"))
-
 
 # def load_ckpt_from_bytes(self, checkpoint_bytes):
 #     buffer = io.BytesIO(checkpoint_bytes)
