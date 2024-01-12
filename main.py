@@ -54,9 +54,9 @@ buffer = convert_to_bytes(model)
 save_bytes_to_file(buffer=buffer, file_path=source_se_checkpoint_path)
 source_se_checkpoint = load_model_from_bytes(load_bytes_from_file(source_se_checkpoint_path))
 
-reference_speaker_name = "demo_speaker2"
+reference_speaker_name = "demo_speaker1"
 reference_speaker = f'resources/{reference_speaker_name}.mp3'
-#se spectral envelope
+# se spectral envelope
 # target_se, audio_name = se_extractor.get_se(reference_speaker, tone_color_converter, target_dir='processed', vad=True)
 
 target_se_checkpoint_path = f"target_se/{reference_speaker_name}_se.bin"
@@ -76,11 +76,13 @@ src_path = f'{output_dir}/tmp.wav'
 speakers = ["friendly", "cheerful", "excited", "sad", "angry", "terrified", "shouting", "whispering"]
 
 for speaker in speakers:
+    #???
     base_speaker_path = f'{output_dir}/{speaker}_tmp.wav'
     base_speaker_tts.tts(text, base_speaker_path, speaker=speaker, language='English', speed=1.0)
 
     save_path = f'{output_dir}/{speaker}_out.wav'
 
+    # ???
     tone_color_converter.convert(
         audio_src_path=base_speaker_path,
         src_se=source_se_checkpoint,
