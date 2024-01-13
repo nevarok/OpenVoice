@@ -76,7 +76,7 @@ target_se = load_model_from_bytes(load_bytes_from_file(target_se_checkpoint_path
 save_path = f'{output_dir}/output_en_default.wav'
 
 # Run the base speaker tts
-text = "the quick brown fox jumps over the lazy do the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy do the quick brown fox jumps over the lazy dog"
+text = "the quick brown fox jumps over the lazy dog"
 src_path = f'{output_dir}/tmp.wav'
 speakers = ["friendly", "cheerful", "excited", "sad", "angry", "terrified", "shouting", "whispering"]
 
