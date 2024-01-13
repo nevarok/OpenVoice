@@ -104,6 +104,28 @@ class BaseSpeakerTTS(OpenVoiceBaseClass):
         else:
             soundfile.write(output_path, audio, self.hps.data.sampling_rate)
 
+    def tts2(self, text, speaker, language='English', speed=1.0):
+        mark = self.language_marks.get(language.lower(), None)
+        assert mark is not None, f"language {language} is not supported"
+
+        texts = self.split_sentences_into_pieces(text, mark)
+
+        audio_list = []
+        for t in texts:
+            t = re.sub(r'([a-z])([A-Z])', r'\1 \2', t)
+            t = f'[{mark}]{t}[{mark}]'
+            stn_tst = self.get_text(t, self.hps, False)
+            device = self.device
+            speaker_id = self.hps.speakers[speaker]
+            with torch.no_grad():
+                x_tst = stn_tst.unsqueeze(0).to(device)
+                x_tst_lengths = torch.LongTensor([stn_tst.size(0)]).to(device)
+                sid = torch.LongTensor([speaker_id]).to(device)
+                audio = self.model.infer(x_tst, x_tst_lengths, sid=sid, noise_scale=0.667, noise_scale_w=0.6,
+                                         length_scale=1.0 / speed)[0][0, 0].data.cpu().float().numpy()
+            audio_list.append(audio)
+        return self.audio_numpy_concat(audio_list, sr=self.hps.data.sampling_rate, speed=speed)
+
 
 class ToneColorConverter(OpenVoiceBaseClass):
     def __init__(self, *args, **kwargs):
@@ -156,8 +178,26 @@ class ToneColorConverter(OpenVoiceBaseClass):
                                      hps.data.sampling_rate, hps.data.hop_length, hps.data.win_length,
                                      center=False).to(self.device)
             spec_lengths = torch.LongTensor([spec.size(-1)]).to(self.device)
-            audio = self.model.voice_conversion(spec, spec_lengths, sid_src=src_se, sid_tgt=tgt_se, tau=tau)[0][0, 0].data.cpu().float().numpy()
+            audio = self.model.voice_conversion(spec, spec_lengths, sid_src=src_se, sid_tgt=tgt_se, tau=tau)[0][
+                0, 0].data.cpu().float().numpy()
             soundfile.write(output_path, audio, hps.data.sampling_rate)
+
+    def convert2(self, src_audio, src_se, tgt_se, tau=0.5):
+        hps = self.hps
+
+        audio = torch.tensor(src_audio).float()
+
+        with torch.no_grad():
+            y = torch.FloatTensor(audio).to(self.device)
+            y = y.unsqueeze(0)
+            spec = spectrogram_torch(y, hps.data.filter_length,
+                                     hps.data.sampling_rate, hps.data.hop_length, hps.data.win_length,
+                                     center=False).to(self.device)
+            spec_lengths = torch.LongTensor([spec.size(-1)]).to(self.device)
+            audio = self.model.voice_conversion(spec, spec_lengths, sid_src=src_se, sid_tgt=tgt_se, tau=tau)[0][
+                0, 0].data.cpu().float().numpy()
+            sample_rate = hps.data.sampling_rate
+            return audio, sample_rate
 
     def add_watermark(self, audio, message):
         if self.watermark_model is None:

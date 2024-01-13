@@ -1,6 +1,7 @@
 import os
+import time
 
-from torchviz import make_dot
+import soundfile
 
 import se_extractor
 from api import BaseSpeakerTTS, ToneColorConverter
@@ -19,16 +20,18 @@ output_dir = 'outputs'
 
 base_speaker_checkpoint_path = "converted/base_speaker_checkpoint.bin"
 model = load_model(f'{ckpt_base}/checkpoint.pth')
-
-# Printing first-level layers and their names
-# for name, child in model.named_modules():
-#     print(name, child)
-
-# make_dot(y.mean(), params=dict(model.named_parameters()))
 buffer = convert_to_bytes(model)
 save_bytes_to_file(buffer=buffer, file_path=base_speaker_checkpoint_path)
 base_speaker_checkpoint = load_model_from_bytes(load_bytes_from_file(base_speaker_checkpoint_path))
 base_speaker_hps = get_hparams_from_json(load_json_data(f'{ckpt_base}/config.json'))
+
+# #MMS-TTS TEST
+# mms_tts_checkpoint_path = "checkpoints/converted/mms_tts_checkpoint.bin"
+# model = load_model(f'checkpoints/base_speakers/MMS-TTS-ENG/D_100000.pth')
+# buffer = convert_to_bytes(model)
+# save_bytes_to_file(buffer=buffer, file_path=mms_tts_checkpoint_path)
+# base_speaker_checkpoint = load_model_from_bytes(load_bytes_from_file(mms_tts_checkpoint_path))
+# base_speaker_hps = get_hparams_from_json(load_json_data(f'checkpoints/base_speakers/MMS-TTS-ENG/full_models_eng_config.json'))
 
 base_speaker_tts = BaseSpeakerTTS(base_speaker_hps, device=device)
 # base_speaker_tts.load_checkpoint_dict(f'{ckpt_base}/checkpoint.pth')
@@ -56,6 +59,8 @@ source_se_checkpoint = load_model_from_bytes(load_bytes_from_file(source_se_chec
 
 reference_speaker_name = "demo_speaker1"
 reference_speaker = f'resources/{reference_speaker_name}.mp3'
+reference_speaker_name = "Morgan_Freeman"
+reference_speaker = f'resources/{reference_speaker_name}.flac'
 # se spectral envelope
 # target_se, audio_name = se_extractor.get_se(reference_speaker, tone_color_converter, target_dir='processed', vad=True)
 
@@ -75,16 +80,28 @@ text = "the quick brown fox jumps over the lazy dog"
 src_path = f'{output_dir}/tmp.wav'
 speakers = ["friendly", "cheerful", "excited", "sad", "angry", "terrified", "shouting", "whispering"]
 
-for speaker in speakers:
-    #???
-    base_speaker_path = f'{output_dir}/{speaker}_tmp.wav'
-    base_speaker_tts.tts(text, base_speaker_path, speaker=speaker, language='English', speed=1.0)
+for tau in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+    for speaker in speakers:
+        # ???
+        # base_speaker_path = f'{output_dir}/{speaker}_{tau}_tmp.wav'
+        start_time = time.time()
+        src_audio = base_speaker_tts.tts2(text, speaker=speaker, language='English', speed=1.0)
+        end_time = time.time()
+        tts2_duration_ms = (end_time - start_time) * 1000
 
-    save_path = f'{output_dir}/{speaker}_out.wav'
+        tau_str = str(tau).replace('.', '')
+        save_path = f'{output_dir}/{speaker}_{tau_str}_out.wav'
 
-    # ???
-    tone_color_converter.convert(
-        audio_src_path=base_speaker_path,
-        src_se=source_se_checkpoint,
-        tgt_se=target_se,
-        output_path=save_path)
+        # ???
+        start_time = time.time()
+        audio, sample_rate = tone_color_converter.convert2(
+            src_audio=src_audio,
+            src_se=source_se_checkpoint,
+            tgt_se=target_se,
+            tau=tau)
+        end_time = time.time()
+        convert2_duration_ms = (end_time - start_time) * 1000
+
+        soundfile.write(save_path, audio, sample_rate)
+
+        print(f"tts2_duration_ms = [{tts2_duration_ms}]\nconvert2_duration_ms = [{convert2_duration_ms}]")
