@@ -4,13 +4,13 @@ import torch
 import numpy as np
 import re
 import soundfile
-import utils
-import commons
+from openvoice import utils
+from openvoice import commons
 import os
 import librosa
-from text import text_to_sequence
-from mel_processing import spectrogram_torch
-from models import SynthesizerTrn
+from openvoice.text import text_to_sequence
+from openvoice.mel_processing import spectrogram_torch
+from openvoice.models import SynthesizerTrn
 
 
 class OpenVoiceBaseClass(object):
@@ -134,11 +134,6 @@ class ToneColorConverter(OpenVoiceBaseClass):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # if kwargs.get('enable_watermark', True):
-        #     import wavmark
-        #     self.watermark_model = wavmark.load_model().to(self.device)
-        # else:
-        #     self.watermark_model = None
         self.watermark_model = None
 
     def extract_se(self, ref_wav_list, se_save_path=None):
